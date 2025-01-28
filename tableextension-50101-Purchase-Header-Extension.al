@@ -5,20 +5,22 @@ tableextension 50101 "PurchaseHeaderExt MOD010" extends "Purchase Header"
         field(50100; "Quote Type Item Charge Code"; Code[20])
         {
             Caption = 'Quote Type Item Charge Code';
-            TableRelation = "Item Charge";
+            TableRelation = "Item Charge" where("Is Quote Type" = const(true));
             DataClassification = CustomerContent;
 
             trigger OnValidate()
             var
-                PurchLine: Record "Purchase Line";
                 ItemCharge: Record "Item Charge";
+                PurchLine: Record "Purchase Line";
             begin
                 if "Quote Type Item Charge Code" = '' then
                     exit;
 
-                // Validate item charge exists
-                if not ItemCharge.Get("Quote Type Item Charge Code") then
-                    Error(ItemChargeNotFoundErr);
+                // Get defaults from Item Charge
+                if ItemCharge.Get("Quote Type Item Charge Code") then begin
+                    Validate("Quote Type Cost Amount", ItemCharge."Default Cost Amount");
+                    Validate("Cost Split Method", ItemCharge."Default Cost Split Method");
+                end;
 
                 PurchLine.SetRange("Document Type", "Document Type");
                 PurchLine.SetRange("Document No.", "No.");
